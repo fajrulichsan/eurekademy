@@ -1,6 +1,7 @@
 const sequelize = require("../config/database")
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
+const bcrypt = require("bcrypt")
 const User = require("../models/UserModels")
 
 
@@ -99,6 +100,63 @@ exports.deleteUser = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 }
+
+//login controller
+exports.loginUser = async(req, res) =>{
+    const email = req.params.email;
+    const password = req.params.password
+    try{
+        console.log("cari email " + email);
+
+        const user = await User.findOne({
+            where: {
+                email: email
+            }
+        });
+
+        if(!user){
+            console.log("email tidak terdaftar");
+            return res.status(400).json({message : "Email tidak terdaftar"})
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password)
+
+        if(!passwordMatch){
+            return res.status(400).json({message : "Password anda salah"})
+        }
+
+        if (!user.verification){
+            return res.status(400).json({message : "Akun belum di verifikasi, link verifikasi sudah dikirimkan ke email"})
+        }
+
+        return res.status(200).json({ success: true, message: "Login berhasil" });
+    }catch(error){
+        console.error(error);
+        res.status(500).json({message : "Terjadi kesalahan server"})
+    }
+}
+
+//verification account
+exports.verification = async (req, res) => {
+    const token = req.params.token;
+
+    try {
+        const user = await User.findOne({ where: { token: token } });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found with the provided token" });
+        }
+
+        user.verification = true;
+        await user.save(); // Save the updated user
+
+        return res.status(200).json({ success: true, message: "User verification successful" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 
 
 //validation email

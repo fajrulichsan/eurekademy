@@ -1,5 +1,12 @@
-import { useState, useEffect } from "react";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { useContext, useState, useEffect } from "react";
+import { MyContext } from "../../context/ContextProvider";
+import { useNavigate } from "react-router-dom";
+
 const LoginPage = () => {
+    const navigate = useNavigate();
+    const { baseUrl } = useContext(MyContext);
     const [showPassword, setShowPassword] = useState(false);
     const [availableLogin, setAvailableLogin] = useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = useState("");
@@ -17,12 +24,22 @@ const LoginPage = () => {
         }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         refreshAlertMessage();
         if (validationSignUp()) {
-            console.log("berhasil");
-        } else {
-            console.log("gagal");
+            await axios
+                .post(baseUrl + `/user/${login.email}/${login.password}`)
+                .then((res) => {
+                    console.log(res);
+                    navigate("/dashboard");
+                })
+                .catch((error) => {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Gagal",
+                        text: error.response.data.message,
+                    });
+                });
         }
     };
 
@@ -56,12 +73,12 @@ const LoginPage = () => {
         setPasswordErrorMessage("");
     };
 
-     useEffect(() => {
-         const result = Object.values(login).every(
-             (field) => String(field).length !== 0
-         );
-         setAvailableLogin(result);
-     }, [login]);
+    useEffect(() => {
+        const result = Object.values(login).every(
+            (field) => String(field).length !== 0
+        );
+        setAvailableLogin(result);
+    }, [login]);
     return (
         <div>
             {console.log(login)}
