@@ -1,6 +1,12 @@
-import { Fragment, useState } from "react";
+import Swal from "sweetalert2";
+import { Fragment, useState, useContext } from "react";
+import axios from "axios";
+import { MyContext } from "../../context/ContextProvider";
+import { useNavigate } from "react-router-dom";
 
 const SignUpPage = () => {
+    const navigate = useNavigate()
+    const { baseUrl } = useContext(MyContext);
     const [signUpData, setSignUpData] = useState({
         name: "",
         email: "",
@@ -64,8 +70,6 @@ const SignUpPage = () => {
             [name]: value,
         }));
 
-        
-
         const allErrorsEmpty = signUp.every(
             (field) => String(field.value).length != 0
         );
@@ -87,7 +91,6 @@ const SignUpPage = () => {
             }
         }
 
-    
         const fieldToUpdate = errorAlertList.find(
             (field) => field.name === name
         );
@@ -96,12 +99,35 @@ const SignUpPage = () => {
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         refreshAlertMessage();
-        if (validationSignUp()){
-            console.log("berhasil")
-        }else{
-            console.log("gagal");
+        if (await validationSignUp()) {
+            await axios
+                .post(baseUrl + "/user", {
+                    name: signUpData.name,
+                    email: signUpData.email,
+                    password: signUpData.password,
+                })
+                .then(() => {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Berhasil",
+                        text: "Selamat anda berhasil registrasi",
+                        showCancelButton: false, // Tidak menampilkan tombol Batal
+                        confirmButtonText: "OK",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                             navigate("/auth/login");
+                        }
+                    });
+                })
+                .catch((error) => {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Gagal",
+                        text: error.response.data.message,
+                    });
+                });
         }
     };
 
@@ -115,29 +141,29 @@ const SignUpPage = () => {
             isValid = false;
         } else if (String(signUpData.name).length == 0) {
             setNameErrorMessage("Name field cannot be empty");
-            isValid = false
+            isValid = false;
         }
 
         if (String(signUpData.email).length == 0) {
             setEmailErrorMessage("Email field cannot be empty");
-            isValid = false
+            isValid = false;
         } else if (!isValidEmail(String(signUpData.email))) {
             console.log(isValidEmail(signUpData.email));
             setEmailErrorMessage("Invalid email format");
-            isValid = false
+            isValid = false;
         }
 
         if (String(signUpData.password).length == 0) {
             setPasswordErrorMessage("Password field cannot be empty");
-            isValid = false
+            isValid = false;
         } else if (String(signUpData.password).length < 8) {
             setPasswordErrorMessage("Name must be at least 8 characters");
-            isValid = false
+            isValid = false;
         }
 
-        if(signUpData.confirmPassword != signUpData.password){
+        if (signUpData.confirmPassword != signUpData.password) {
             setConfirmPasswordErrorMessage("Passwords do not match");
-            isValid = false
+            isValid = false;
         }
 
         return isValid;
