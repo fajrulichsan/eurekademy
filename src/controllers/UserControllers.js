@@ -157,6 +157,25 @@ exports.verification = async (req, res) => {
     }
 };
 
+exports.getStatusVerification = async (req, res) =>{
+    const token = req.params.token
+    try {
+        const user = await User.findOne({ where: { token: token } });
+        if (user){
+            if (user.verification) {
+                res.status(200).json({ verification: true })
+            } else {
+                res.status(200).json({ verification: false })
+            } 
+        }else{
+            res.status(400).json({ verification: false, message: "Token salah" })
+        }    
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
 
 
 //validation email
