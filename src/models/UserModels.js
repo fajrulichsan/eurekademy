@@ -27,10 +27,16 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: false,
   },
-  token: {
+  token: {                    //token verification
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
+  },
+  resetToken: {               //token reset password
+    type: DataTypes.STRING,
+  },
+  resetTokenExpiration: {
+    type: DataTypes.DATE,
   },
 });
 

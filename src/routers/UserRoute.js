@@ -1,5 +1,7 @@
 const express = require("express");
-const { getAllUser, getUserById, createUser, updateUser, deleteUser, loginUser, verification, getStatusVerification } = require("../controllers/UserControllers");
+const { getAllUser, getUserById, createUser, updateUser, 
+        deleteUser, loginUser, verification, getStatusVerification, 
+        forgotPassword, resetPassword} = require("../controllers/UserControllers");
 
 const router = express.Router();
 
@@ -16,5 +18,9 @@ router.post("/user/:email/:password", loginUser)
 //verication
 router.get("/verify/:token", getStatusVerification)
 router.post("/verify/:token", verification)
+
+//reset password
+router.post("/auth/forgot-password", forgotPassword )
+router.post("/auth/reset-password", resetPassword )
 
 module.exports = router;

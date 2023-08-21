@@ -2,7 +2,9 @@ const sequelize = require("../config/database")
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
 const bcrypt = require("bcrypt")
-const User = require("../models/UserModels")
+const crypto = require("crypto");
+const User = require("../models/UserModels");
+const { throws } = require("assert");
 
 
 //get all User
@@ -50,7 +52,10 @@ exports.createUser = async (req, res) => {
             const createdUser = await User.create(user);
 
             if (createdUser) {
-                sendEmail(user);
+                const directLink = `http://localhost:5173/verify/${user.token}`;
+                const subject = "Email Verification";
+                const text = `<p>Click this link to verify your email: ${directLink}</p>`
+                await sendEmail(user, subject, text);
             }
 
             return res.status(201).json({ acknowledge: true, message: 'Success create user' });
@@ -102,10 +107,10 @@ exports.deleteUser = async (req, res) => {
 }
 
 //login controller
-exports.loginUser = async(req, res) =>{
+exports.loginUser = async (req, res) => {
     const email = req.params.email;
     const password = req.params.password
-    try{
+    try {
         console.log("cari email " + email);
 
         const user = await User.findOne({
@@ -114,25 +119,25 @@ exports.loginUser = async(req, res) =>{
             }
         });
 
-        if(!user){
+        if (!user) {
             console.log("email tidak terdaftar");
-            return res.status(400).json({message : "Email tidak terdaftar"})
+            return res.status(400).json({ message: "Email tidak terdaftar" })
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password)
 
-        if(!passwordMatch){
-            return res.status(400).json({message : "Password anda salah"})
+        if (!passwordMatch) {
+            return res.status(400).json({ message: "Password anda salah" })
         }
 
-        if (!user.verification){
-            return res.status(400).json({message : "Akun belum di verifikasi, link verifikasi sudah dikirimkan ke email"})
+        if (!user.verification) {
+            return res.status(400).json({ message: "Akun belum di verifikasi, link verifikasi sudah dikirimkan ke email" })
         }
 
         return res.status(200).json({ success: true, message: "Login berhasil" });
-    }catch(error){
+    } catch (error) {
         console.error(error);
-        res.status(500).json({message : "Terjadi kesalahan server"})
+        res.status(500).json({ message: "Terjadi kesalahan server" })
     }
 }
 
@@ -157,24 +162,80 @@ exports.verification = async (req, res) => {
     }
 };
 
-exports.getStatusVerification = async (req, res) =>{
+exports.getStatusVerification = async (req, res) => {
     const token = req.params.token
     try {
         const user = await User.findOne({ where: { token: token } });
-        if (user){
+        if (user) {
             if (user.verification) {
                 res.status(200).json({ verification: true })
             } else {
                 res.status(200).json({ verification: false })
-            } 
-        }else{
+            }
+        } else {
             res.status(400).json({ verification: false, message: "Token salah" })
-        }    
+        }
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error" });
     }
 }
+
+exports.forgotPassword = async (req, res) => {
+    console.log("okee");
+    const { email } = req.body;
+    console.log(email);
+    try {
+        console.log(email);
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            return res.status(400).json({ message: "User not found" })
+        }
+
+        const resetToken = crypto.randomBytes(20).toString("hex");
+        user.resetToken = resetToken;
+        user.resetTokenExpiration = Date.now() + 3600000; // Token expires in 1 hour
+        await user.save();
+
+        //send email
+        const directLink = `http://localhost:5173/auth/reset-password/${resetToken}`
+        const subject = "Email Reset Password";
+        const text = `<p>Click <a href="${directLink}">here</a> to reset your password.</p>`
+        try {
+            await sendEmail(user, subject, text);
+        } catch (error) {
+            console.log(error);
+        }
+        return res.status(200).json({ success: true, message: "Send email reset password successful" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    const { token, password } = req.body;
+
+    try {
+        // Temukan pengguna berdasarkan token yang diterima
+        const user = await User.findOne({ where: { resetToken: token } });
+
+        if (!user) {
+            return res.status(400).json({ acknowledge: false, message: 'Invalid token' });
+        }
+
+        // Hash password baru
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Update password pengguna
+        await User.update({ password: hashedPassword, resetToken: null }, { where: { id: user.id } });
+
+        return res.status(200).json({ acknowledge: true, message: 'Password updated successfully' });
+    } catch (error) {
+        console.error('Error updating password:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
 
 
@@ -201,7 +262,7 @@ const validationSignUp = (user) => {
 
     if (name.length == 0) {
         throw Error("Name tidak boleh kosong");
-    }else if (name.length < 3){
+    } else if (name.length < 3) {
         throw Error("Password harus memiliki setidaknya 3 karakter")
     }
 
@@ -218,13 +279,12 @@ const validationSignUp = (user) => {
     }
 }
 
-const sendEmail = async (user) => {
-    const verificationLink = `http://localhost:5173/verify/${user.token}`; // Ganti dengan base URL Anda
+const sendEmail = async (user, subject, text) => {
     const mailOptions = {
         from: 'payogot@gmail.com',
         to: user.email,
-        subject: 'Email Verification',
-        text: `Click this link to verify your email: ${verificationLink}`,
+        subject: subject,
+        html: text,
     };
 
     try {
