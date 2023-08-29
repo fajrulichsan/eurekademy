@@ -22,6 +22,7 @@ const LoginPage = () => {
             ...prev,
             [name]: value,
         }));
+        setEmailErrorMessage("")
     };
 
     const handleSubmit = async () => {
@@ -34,11 +35,12 @@ const LoginPage = () => {
                     navigate("/dashboard");
                 })
                 .catch((error) => {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Gagal",
-                        text: error.response.data.message,
-                    });
+                    // Swal.fire({
+                    //     icon: "error",
+                    //     title: "Gagal",
+                    //     text: error.response.data.message,
+                    // });
+                    setEmailErrorMessage(error.response.data.message)
                 });
         }
     };
@@ -51,7 +53,7 @@ const LoginPage = () => {
             isValid = false;
         } else if (!isValidEmail(String(login.email))) {
             console.log(isValidEmail(login.email));
-            setEmailErrorMessage("Invalid email format");
+            setEmailErrorMessage("Please enter a valid email address.");
             isValid = false;
         }
 
@@ -101,7 +103,7 @@ const LoginPage = () => {
                                         type="text"
                                         name="email"
                                         id="email"
-                                        className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                        className={`${emailErrorMessage ? "border-red-500" : ""} bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                                         placeholder="example@gmail.com"
                                         onChange={(e) => onInputLogin(e)}
                                     />

@@ -40,6 +40,7 @@ exports.createUser = async (req, res) => {
             email: req.body.email,
             password: req.body.password,
             token: uuidv4(),
+            resetTokenExpiration: new Date(),
         };
 
         try {
