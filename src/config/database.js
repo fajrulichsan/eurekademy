@@ -1,7 +1,7 @@
 // import { Sequelize } from "sequelize";
 const {Sequelize} = require("sequelize")
 
-const sequelize = new Sequelize('mern', 'root', 'root', {
+const sequelize = new Sequelize('eurekademy', 'root', 'root', {
     host : 'localhost',
     dialect : 'mysql'
 })

@@ -1,7 +1,7 @@
 
 const express = require('express')
 const cors = require('cors')
-const UserRoute = require("./src/routers/UserRoute")
+const router = require("./src/routers/routers")
 
 const app = express()
 
@@ -11,12 +11,10 @@ const app = express()
 //   optionsSuccessStatus: 200 // Beberapa browser membutuhkan ini untuk mengizinkan metode HTTP lain selain GET/POST
 // }));
 
-// app.use(express.json())
-// app.use("/", UserRoute);
+app.use(express.json())
+app.use("/", router);
 
-app.get("/", (res, req) => {
-  res.set("Welcome")
-})
+
 
 
 app.listen(3000, () => console.log("running server"))

@@ -1,5 +1,4 @@
 const { DataTypes } = require('sequelize');
-const bcrypt = require("bcrypt")
 const sequelize = require('../config/database'); // Import your Sequelize instance (sequelize)
 
 const User = sequelize.define('User', {
@@ -8,7 +7,7 @@ const User = sequelize.define('User', {
     primaryKey: true,
     allowNull: false,
   },
-  name: {
+  username: {
     type: DataTypes.STRING,
     allowNull: false,
   },
@@ -21,21 +20,23 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  verification: {
+  isVerification: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false, // Set the default value to true
   },
+  verificationCode: {
+    type : DataTypes.BIGINT,
+    allowNull : false,
+    defaultValue : 0000
+  },
+  verificationExpired : {
+    type : DataTypes.DATE,
+    allowNull : false,
+  } 
 });
 
 // Add a hook to generate id from timestamp before creating a record
-User.beforeCreate(async (user) => {
-  user.id = new Date().getTime(); // Generate ID from current timestamp
-
-  // Hash the password before saving it to the database
-  const hashedPassword = await bcrypt.hash(user.password, 10);
-  user.password = hashedPassword;
-});
 
 module.exports = User;
 
