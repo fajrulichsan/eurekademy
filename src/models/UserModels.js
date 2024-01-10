@@ -33,7 +33,12 @@ const User = sequelize.define('User', {
   verificationExpired : {
     type : DataTypes.DATE,
     allowNull : false,
-  } 
+  },
+  role: {
+    type : DataTypes.INTEGER,
+    allowNull : false,
+    defaultValue : 0
+  }, 
 });
 
 // Add a hook to generate id from timestamp before creating a record

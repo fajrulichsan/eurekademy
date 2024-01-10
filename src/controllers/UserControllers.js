@@ -59,7 +59,11 @@ exports.createUser = async (req, res) => {
             username : data.username
         }
 
-        await Profile.create(profileData)
+        const user = await Profile.findOne({where : {email : data.email}})
+        if(!user){
+            await Profile.create(profileData)
+        }
+
         res.status(201).json({ status: "Success", message: "User created successfully" });
     } catch (error) {
         console.error('Error creating user:', error);
