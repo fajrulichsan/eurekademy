@@ -80,6 +80,7 @@ exports.Login = async (req, res) => {
 
         // check if user is not registered
         if (!user) {
+            console.log("User is not registered");
             return res.status(400).json({ status: 'error', field: 'email', message: 'User is not registered' });
         }
 
